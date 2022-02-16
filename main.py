@@ -17,7 +17,7 @@ def parse_args():
     parser.add_argument('-aug',    type=int, default=1, help='augmentation size')
     parser.add_argument('-dataset',           help='path to the dataset directory (default: ./dataset)', type =str, default='./dataset' )
     # IPU specific operations
-    parser.add_argument('-num-threads',       help='Number of worker threads to be used in data loader', type=int, default=10 )
+    parser.add_argument('-num-threads',       help='Number of worker threads to be used in data loader', type=int, default=8 )
     parser.add_argument('-device-iter',       help='number of mini batches processed on IPU per execution step' ,type=int, default=10)
     parser.add_argument('-num-train-replica', help='Number of IPUs used for training in data-parallel mode', type=int, default=1 )
     parser.add_argument('-num-infer-replica', help='Number of IPUs used for validation/inference in data-parallel mode', type=int, default=1 )
