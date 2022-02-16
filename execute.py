@@ -185,7 +185,7 @@ class BraggNN_GPU( BraggNN_Trainer ):
         # Transfer to model and preprocessing to GPUs
         if torch.cuda.is_available():
             self.training_model.to(self.torch_devs)
-            self.model_preprocess.to(self.torch_devs())
+            self.model_preprocess.to(self.torch_devs)
         
         self.criterion = torch.nn.MSELoss()
         self.optimizer = torch.optim.Adam(model.parameters(), lr=args.lr) 
