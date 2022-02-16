@@ -1,2 +1,3 @@
 # BraggNN_IPU
-IPU version of the BraggNN as described in: https://github.com/lzhengchun/BraggNN
+
+IPU compatible version of BraggNN as available at: https://github.com/lzhengchun/BraggNN
