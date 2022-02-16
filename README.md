@@ -10,4 +10,6 @@ Follow the instructions described [here](https://docs.graphcore.ai/projects/ipu-
 
 ## Install Prerequisites
 Once the correct python environment as described in the previous section, install the required prequisites using
-  pip install -r requirements.txt
+    pip install -r requirements.txt
+
+
