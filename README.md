@@ -14,13 +14,12 @@ Once the correct python environment as described in the previous section, instal
         pip install -r requirements.txt
 ```
 ## Train model on IPU
-To run training on model, simply run the following command:
+By default, this script run the model training & validation on IPU by running the following command:
 ```
         python main.py -dataset <path to dataset directory: Default='./dataset'>
 ```
 This would run model training using the default batch size of 512 and 500 epochs. Use ```python main.py -h``` to list all the available settings
 
 ## Train model on GPU
-To run on gpu, simple use the argument '-device gpu' i.e.
+To run on gpu, simple use the argument ```-device gpu``` i.e.
 ```python main.py -device gpu```
-
