@@ -5,7 +5,7 @@ IPU compatible version of BraggNN as available at: https://github.com/lzhengchun
 ## Prepare Dataset
 Before the BraggNN is trained, download and prepare the dataset by running the script 'setup_data.sh' available in the repository. It will download the dataset from Zhengchun's repository and untar the dataset file in current directory. If successful, the current directory should have directory named 'dataset'
 
-## Install POPSDK for IPU
+## Install Poplar SDK for IPU
 Follow the instructions described [here](https://docs.graphcore.ai/projects/ipu-pod-getting-started/en/latest/installation.html#sdk-installation) to install the POPSDK for Pytorch. This code uses 'poptorch' module which is the IPU specific library for Pytorch. To learn more about using pytorch for IPU, please refer to the [documentation](https://docs.graphcore.ai/en/latest/software.html#pytorch) and available [tutorials](https://github.com/graphcore/tutorials/tree/master/tutorials/pytorch)
 
 ## Install Prerequisites
