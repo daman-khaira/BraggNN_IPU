@@ -95,13 +95,15 @@ class BraggNN(torch.nn.Module):
         return _out
 
 class DataPreproccessingBlock(torch.nn.Module):
-    def __init__( self, out_img_sz, max_random_shift=0, in_img_sz=-1 ) -> None:
+    def __init__( self, out_img_sz, max_random_shift=0, in_img_sz=-1, type=torch.float32 ) -> None:
         super().__init__()
         self.torch_devs = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         
         self.out_img_sz = out_img_sz
         self.out_img_sz_half = self.out_img_sz//2
         self.shift_max = max_random_shift
+
+        self.data_type = type
 
         # Deal with input image now
         self.in_img_sz = -1
@@ -156,7 +158,7 @@ class DataPreproccessingBlock(torch.nn.Module):
         if self.in_img_sz > self.out_img_sz:
             nbatch, nch, nr, nc = inp_patch.size()
             # generate random shifts (x,y) for entire minibatch
-            rnd_shift = torch.randint( -self.shift_max, self.shift_max+1, (nbatch, 2), dtype=torch.float32 ).to(self.torch_devs)
+            rnd_shift = torch.randint( -self.shift_max, self.shift_max+1, (nbatch, 2), dtype=self.data_type ).to(self.torch_devs)
 
             # shift peak location
             # If peak location is not provided, then clip around the center of the input image
@@ -196,12 +198,17 @@ class DataPreproccessingBlock(torch.nn.Module):
         return inp_patch, label_loc.type(torch.float32)
 
 class TrainingModelWithLoss(torch.nn.Module):
-    def __init__(self, model, in_sz: int, out_sz: int, max_shift: int):
+    def __init__(self, model, in_sz: int, out_sz: int, max_shift: int, dtype=torch.float32):
         super().__init__()
         self.model = model
-        self.augmentation = None
+        
+        # Change the model to half precision
+        if dtype == torch.float16:
+            print("Converting Model to Half Precision")
+            self.model = self.model.half()
+
         self.loss = torch.nn.MSELoss()
-        self.augmentation = DataPreproccessingBlock(out_sz, max_random_shift=max_shift, in_img_sz= in_sz)
+        self.augmentation = DataPreproccessingBlock(out_sz, max_random_shift=max_shift, in_img_sz= in_sz, type=dtype)
 
     def forward(self, input_patch, loss_inputs=None):
         if self.augmentation:

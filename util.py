@@ -16,3 +16,9 @@ def str2tuple(s):
 
 def s2ituple(s):
     return tuple(int(_s) for _s in s.split('_'))
+
+def precision_handler(val):
+    if val == "half":
+        return torch.float16
+    else:
+        return torch.float32

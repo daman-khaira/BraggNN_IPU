@@ -206,7 +206,7 @@ class BraggDatasetLitest(Dataset):
         return self.images[idx,...], self.labels[idx,...]
 
 class BraggDatasetOptimized(Dataset):
-    def __init__( self, dataset='./dataset', padded_img_sz=11, psz = 11, use='train', train_frac=0.8 ):
+    def __init__( self, dataset='./dataset', padded_img_sz=11, psz = 11, use='train', train_frac=0.8, precision = "float" ):
         super().__init__()
         self.frame_sz = padded_img_sz # Size of image
         
@@ -235,8 +235,9 @@ class BraggDatasetOptimized(Dataset):
         self.len = peak_fidx.shape[0]
         
         # Preallocate arrays for labels and images
-        self.peak_loc = np.zeros((self.len,2), dtype=np.float32)
-        self.imgs   = np.zeros((self.len, 1, self.frame_sz, self.frame_sz), dtype=np.float32)
+        dtype = np.float16 if precision == "half" else np.float32
+        self.peak_loc = np.zeros((self.len,2), dtype=dtype)
+        self.imgs   = np.zeros((self.len, 1, self.frame_sz, self.frame_sz), dtype=dtype)
 
         for ii in range(self.len):
             # Fetch current frame

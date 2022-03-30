@@ -10,7 +10,7 @@ from tqdm import tqdm
 import numpy as np
 
 class BraggNN_Trainer(object):
-    def __init__( self, device_name ) -> None:
+    def __init__( self, device_name, dtype=torch.float32 ) -> None:
         self.device_name = device_name
         self.dl_train = None
         self.training_model = None
@@ -21,14 +21,18 @@ class BraggNN_Trainer(object):
         # Total time taken inside compute iterations
         self.train_time = 0
         self.valid_time = 0
+
+        # Set the precision
+        self.dtype = dtype
         print("BraggNN training running on: ", self.device_name)
+        print("Precision", dtype)
     
     def getDeviceName(self) -> str:
         return self.device_name
 
 class BraggNN_IPU( BraggNN_Trainer ):
-    def __init__(self, model, args, train_dataset=None, val_dataset=None):
-        super().__init__("IPU")
+    def __init__(self, model, args, train_dataset=None, val_dataset=None, dtype = torch.float32):
+        super().__init__("IPU", dtype)
 
         assert ((model is not None) and (train_dataset is not None)), " BraggNN_IPU: Model and Training dataset must not be NONE" 
 
@@ -54,7 +58,7 @@ class BraggNN_IPU( BraggNN_Trainer ):
         train_img, train_lbl = next(iter(self.dl_train))
         # Get input image size
         _, _, in_img_rows, _ = train_img.size()
-        train_model_with_loss = TrainingModelWithLoss(model, in_img_rows, args.psz, args.aug)
+        train_model_with_loss = TrainingModelWithLoss(model, in_img_rows, args.psz, args.aug, dtype)
 
         optimizer = self.poptorch.optim.Adam(model.parameters(), lr=args.lr) 
         self.training_model = self.poptorch.trainingModel(train_model_with_loss, options=train_model_opts, optimizer=optimizer)
@@ -165,8 +169,8 @@ class BraggNN_IPU( BraggNN_Trainer ):
 
 
 class BraggNN_GPU( BraggNN_Trainer ):
-    def __init__(self, model, args, train_dataset=None, val_dataset=None):
-        super().__init__("GPU" if torch.cuda.is_available() else "CPU" )
+    def __init__(self, model, args, train_dataset=None, val_dataset=None, dtype = torch.float32):
+        super().__init__("GPU" if torch.cuda.is_available() else "CPU", dtype )
         assert ((model is not None) and (train_dataset is not None)), " BraggNN_IPU: Model and Training dataset must not be NONE" 
 
         # ------------------------ #
@@ -248,13 +252,15 @@ class BraggNN_GPU( BraggNN_Trainer ):
 
         return train_loss, valid_loss, epoch_throughput
 
-def getBraggTrainer(model, args, train_dataset=None, val_dataset=None):
+def getBraggTrainer(model, args, train_dataset=None, val_dataset=None, dtype=torch.float32):
     if args.device=='ipu':
-        return BraggNN_IPU(model, args, train_dataset=train_dataset, val_dataset=val_dataset)
+        return BraggNN_IPU(model, args, train_dataset=train_dataset, val_dataset=val_dataset, dtype=dtype)
     else:
-        return BraggNN_GPU(model, args, train_dataset=train_dataset, val_dataset=val_dataset)
+        return BraggNN_GPU(model, args, train_dataset=train_dataset, val_dataset=val_dataset, dtype=dtype)
 
 def execute(args):
+
+    dtype = torch.float16 if args.precision=="half" else torch.float32
 
     itr_out_dir = "BraggNN_"+args.expName
     if os.path.isdir(itr_out_dir):
@@ -284,8 +290,8 @@ def execute(args):
 
     ds_img_sz = args.psz+2*(args.aug+1)
     dl_time_start = time.perf_counter()
-    ds_train = BraggDatasetOptimized( dataset=args.dataset, padded_img_sz=ds_img_sz, psz=args.psz, use='train', train_frac=0.8 )
-    ds_valid = BraggDatasetOptimized( dataset=args.dataset, padded_img_sz=ds_img_sz, psz=args.psz, use='validation', train_frac=0.8 )
+    ds_train = BraggDatasetOptimized( dataset=args.dataset, padded_img_sz=ds_img_sz, psz=args.psz, use='train', train_frac=0.8, precision=args.precision )
+    ds_valid = BraggDatasetOptimized( dataset=args.dataset, padded_img_sz=ds_img_sz, psz=args.psz, use='validation', train_frac=0.8, precision=args.precision )
     dl_time_end = time.perf_counter()
 
     # Print dataset statistics:
@@ -298,7 +304,7 @@ def execute(args):
     model = BraggNN(imgsz=args.psz, fcsz=args.fcsz)
 
     _ = model.apply(model_init) # init model weights and bias
-    model_trainer = getBraggTrainer(model, args, train_dataset=ds_train, val_dataset=ds_valid)
+    model_trainer = getBraggTrainer(model, args, train_dataset=ds_train, val_dataset=ds_valid, dtype=dtype)
 
 
     # Store epoch id, time, mean training loss, mean validation, and average throughtput for epochs

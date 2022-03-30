@@ -2,8 +2,9 @@ import pickle
 pickle.DEFAULT_PROTOCOL=4
 
 import argparse, os, time, sys, shutil, logging
-from util import str2bool, str2tuple, s2ituple
+from util import str2bool, str2tuple, s2ituple, precision_handler
 from execute import execute
+
 
 def parse_args():
     parser = argparse.ArgumentParser(description='Bragg peak finding for HEDM.')
@@ -16,6 +17,7 @@ def parse_args():
     parser.add_argument('-psz',    type=int, default=11, help='working patch size')
     parser.add_argument('-aug',    type=int, default=1, help='augmentation size')
     parser.add_argument('-dataset',           help='path to the dataset directory (default: ./dataset)', type =str, default='./dataset' )
+    parser.add_argument('-precision', type=str, default='float', choices=['half','float'], help='Model precision: half -> fp16, float -> fp32' )
     # IPU specific operations
     parser.add_argument('-num-threads',       help='Number of worker threads to be used in data loader', type=int, default=8 )
     parser.add_argument('-device-iter',       help='number of mini batches processed on IPU per execution step' ,type=int, default=10)
