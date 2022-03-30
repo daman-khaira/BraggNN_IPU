@@ -41,6 +41,7 @@ def parse_args():
 
 
 if __name__ == "__main__":
+    tic = time.perf_counter()
     args = parse_args()
     #set debugging flags
     if args.profile:
@@ -48,3 +49,5 @@ if __name__ == "__main__":
         os.environ['POPLAR_ENGINE_OPTIONS'] = '{"autoReport.all":"true", "autoReport.directory":"./profile"}'
 
     execute(args)
+    toc = time.perf_counter()
+    print("Total Process Time [s]: ", toc-tic)
