@@ -206,9 +206,10 @@ class BraggDatasetLitest(Dataset):
         return self.images[idx,...], self.labels[idx,...]
 
 class BraggDatasetOptimized(Dataset):
-    def __init__( self, dataset='./dataset', padded_img_sz=11, psz = 11, use='train', train_frac=0.8, precision = "float" ):
+    def __init__( self, dataset='./dataset', padded_img_sz=11, psz = 11, use='train', train_frac=0.8, precision = "float", copy_tensor=True ):
         super().__init__()
         self.frame_sz = padded_img_sz # Size of image
+        self.copy_tensor = copy_tensor
         
         # Extract the information about rows and columns
         with h5py.File( os.path.join(dataset, 'peaks-exp4train-psz%d.hdf5' % psz), "r") as h5fd: 
@@ -260,4 +261,7 @@ class BraggDatasetOptimized(Dataset):
         return self.len
     
     def __getitem__(self, idx):
-        return torch.from_numpy(self.imgs[idx,...].copy()), torch.from_numpy(self.peak_loc[idx,...].copy())
+        if self.copy_tensor:
+            return torch.from_numpy(self.imgs[idx,...].copy()), torch.from_numpy(self.peak_loc[idx,...].copy())
+        else:
+            return self.imgs[idx,...], self.peak_loc[idx,...]
