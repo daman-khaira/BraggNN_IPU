@@ -53,6 +53,10 @@ class BraggNN_IPU( BraggNN_Trainer ):
         train_model_opts = self.getModelOptions( cache = (not args.no_cache), device_iter = args.device_iter,
                                                  replicas = args.num_train_replica, benchmark = args.benchmark )
 
+        if (dtype == torch.float16 and args.partials == "half" ):
+            print("SETTING PARTIALS TO HALF")
+            train_model_opts.Precision.setPartialsType(torch.half)
+
         self.dl_train = self.getDataloader(train_dataset, train_model_opts, args)
         # Get the sample image for the input dataset
         train_img, train_lbl = next(iter(self.dl_train))
@@ -60,7 +64,9 @@ class BraggNN_IPU( BraggNN_Trainer ):
         _, _, in_img_rows, _ = train_img.size()
         train_model_with_loss = TrainingModelWithLoss(model, in_img_rows, args.psz, args.aug, dtype)
 
-        optimizer = self.poptorch.optim.Adam(model.parameters(), lr=args.lr) 
+        loss_scaling = args.loss_scaling if args.loss_scaling else None
+
+        optimizer = self.poptorch.optim.Adam(model.parameters(), lr=args.lr, loss_scaling=loss_scaling)
         self.training_model = self.poptorch.trainingModel(train_model_with_loss, options=train_model_opts, optimizer=optimizer)
 
         # Compile the Training the first
@@ -78,6 +84,9 @@ class BraggNN_IPU( BraggNN_Trainer ):
             val_model_opts = self.getModelOptions( cache = (not args.no_cache), replicas = args.num_infer_replica,
                                                    benchmark = args.benchmark )
 
+            if (dtype == torch.float16 and args.partials == "half" ):
+                print("SETTING PARTIALS TO HALF")
+                val_model_opts.Precision.setPartialsType(torch.half)
 
             self.dl_valid = self.getDataloader(val_dataset, val_model_opts, args)
             # Get the sample image for the input dataset
@@ -290,8 +299,8 @@ def execute(args):
 
     ds_img_sz = args.psz+2*(args.aug+1)
     dl_time_start = time.perf_counter()
-    ds_train = BraggDatasetOptimized( dataset=args.dataset, padded_img_sz=ds_img_sz, psz=args.psz, use='train', train_frac=0.8, precision=args.precision )
-    ds_valid = BraggDatasetOptimized( dataset=args.dataset, padded_img_sz=ds_img_sz, psz=args.psz, use='validation', train_frac=0.8, precision=args.precision )
+    ds_train = BraggDatasetOptimized( dataset=args.dataset, padded_img_sz=ds_img_sz, psz=args.psz, use='train', train_frac=0.8, precision=args.precision, copy_tensor= (args.device=="gpu") )
+    ds_valid = BraggDatasetOptimized( dataset=args.dataset, padded_img_sz=ds_img_sz, psz=args.psz, use='validation', train_frac=0.8, precision=args.precision, copy_tensor= (args.device=="gpu") )
     dl_time_end = time.perf_counter()
 
     # Print dataset statistics:
