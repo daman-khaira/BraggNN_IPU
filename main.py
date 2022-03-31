@@ -26,6 +26,8 @@ def parse_args():
     parser.add_argument('-no-cache',          help='disable model caching (default: False). Compilation time will increase by disabling caching', action="store_true" )
     parser.add_argument('-benchmark',         help='Benchmark the dataloader and IPU model for epochs specified by -maxep argument', action="store_true" )
     parser.add_argument('-profile',           help='profile the IPU run (default: False). Loading a cached model with profiling on might result in a compilation error', action="store_true" )
+    parser.add_argument('-partials', type=str, default='float', choices=['half','float'], help='Whether partials of matmul or convolution operations be float16 or float32' )
+    parser.add_argument('-loss-scaling', type=float, help='Scale the loss during float16 computations to prevent underflows' )
 
     args, unparsed = parser.parse_known_args()
 
