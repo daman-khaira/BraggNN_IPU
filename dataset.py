@@ -156,7 +156,7 @@ class BraggDatasetLite(Dataset):
             col_max  = min(frame_col, curr_col+self.frame_sz//2+self.frame_sz%2)
             self.peak_loc[ii,0] = peak_row[ii]-row_base
             self.peak_loc[ii,1] = peak_col[ii]-col_base
-            self.imgs[ii,...] = curr_frame[row_base:row_max, col_base:col_max]
+            self.imgs[ii,...] = clean_patch(curr_frame[row_base:row_max, col_base:col_max], self.peak_loc[ii,:])
    
     def __len__(self):
         return self.len
@@ -175,18 +175,9 @@ class BraggDatasetLite(Dataset):
 
         crop_img = curr_frame[ frame_start[0]:frame_end[0], frame_start[1]:frame_end[1] ] 
 
-        peak_center = curr_peak - frame_start
-        crop_img = clean_patch(crop_img, peak_center)
-        if crop_img.max() != crop_img.min():
-            _min, _max = crop_img.min().astype(np.float32), crop_img.max().astype(np.float32)
-            feature = (crop_img - _min) / (_max - _min)
-        else:
-            logging.warn("sample %d has unique intensity sum of %d" % (idx, crop_img.sum()))
-            feature = crop_img
-
         label = (curr_peak-frame_start)/self.psz
 
-        return feature[np.newaxis], np.array([label[1], label[0]]).astype(np.float32)
+        return crop_img[np.newaxis], np.array([label[1], label[0]]).astype(np.float32)
         
 class BraggDatasetLitest(Dataset):
     def __init__( self, dataset='./dataset', psz=11, rnd_shift=0, use='train', train_frac=0.8 ):

@@ -79,7 +79,7 @@ class BraggNN(torch.nn.Module):
         return x.view(mbsz, nchannel, h, w)
 
     def forward(self, x):
-        _out = x
+        _out = self.normalize_input(x)
         for layer in self.cnn_layers[:1]:
             _out = layer(_out)
 

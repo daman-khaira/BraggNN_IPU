@@ -5,7 +5,7 @@ pickle.DEFAULT_PROTOCOL=4
 import torch, argparse, os, time, sys, shutil, logging
 from model import model_init, BraggNN, TrainingModelWithLoss, DataPreproccessingBlock
 from torch.utils.data import DataLoader
-from dataset import BraggDatasetOptimized, BraggNNDataset, BraggDatasetLite
+from dataset import BraggDatasetLite
 from tqdm import tqdm
 import numpy as np
 
