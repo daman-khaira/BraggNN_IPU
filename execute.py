@@ -5,7 +5,7 @@ pickle.DEFAULT_PROTOCOL=4
 import torch, argparse, os, time, sys, shutil, logging
 from model import model_init, BraggNN, TrainingModelWithLoss, DataPreproccessingBlock
 from torch.utils.data import DataLoader
-from dataset import BraggDatasetOptimized, BraggNNDataset
+from dataset import BraggDatasetOptimized, BraggNNDataset, BraggDatasetLite
 from tqdm import tqdm
 import numpy as np
 
@@ -105,8 +105,20 @@ class BraggNN_IPU( BraggNN_Trainer ):
                 print("Inference model compile time: {:.3f} s".format(time2compile))
 
     def getDataloader(self, ds, opts, args):
-        return DataLoader( dataset=ds, batch_size=args.mbsz, shuffle=True,\
-                           num_workers=args.num_threads, prefetch_factor=args.mbsz, drop_last=True, pin_memory=True )
+        async_options = { "sharing_strategy": self.poptorch.SharingStrategy.SharedMemory,
+                        "early_preload":     True, "buffer_size": args.num_threads,
+                        "load_indefinitely": True, "miss_sleep_time_in_ms": 0 }
+
+        return self.poptorch.DataLoader( options=opts, 
+                                    dataset=ds,
+                                    batch_size = args.mbsz,
+                                    shuffle=True,
+                                    drop_last=True,
+                                    num_workers=args.num_threads,
+                                    persistent_workers=True,
+                                    mode = self.poptorch.DataLoaderMode.Async,
+                                    async_options=async_options
+                                  )
 
     def getModelOptions(self, cache = True, device_iter = 1, replicas = 1, benchmark = False):
         model_opts = self.poptorch.Options()
@@ -287,8 +299,8 @@ def execute(args):
 
     ds_img_sz = args.psz+2*(args.aug+1)
     dl_time_start = time.perf_counter()
-    ds_train = BraggNNDataset( dataset=args.dataset, psz=args.psz, rnd_shift=args.aug, use='train', train_frac=0.8)
-    ds_valid = BraggNNDataset( dataset=args.dataset, psz=args.psz, rnd_shift=args.aug, use='validation', train_frac=0.8)
+    ds_train = BraggDatasetLite( dataset=args.dataset, psz=args.psz, rnd_shift=args.aug, use='train', train_frac=0.8)
+    ds_valid = BraggDatasetLite( dataset=args.dataset, psz=args.psz, rnd_shift=args.aug, use='validation', train_frac=0.8)
     dl_time_end = time.perf_counter()
 
     # Print dataset statistics:
