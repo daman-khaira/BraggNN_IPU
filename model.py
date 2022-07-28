@@ -79,7 +79,7 @@ class BraggNN(torch.nn.Module):
         return x.view(mbsz, nchannel, h, w)
 
     def forward(self, x):
-        _out = self.normalize_input(x)
+        _out = x
         for layer in self.cnn_layers[:1]:
             _out = layer(_out)
 
@@ -198,7 +198,7 @@ class DataPreproccessingBlock(torch.nn.Module):
         return inp_patch, label_loc.type(torch.float32)
 
 class TrainingModelWithLoss(torch.nn.Module):
-    def __init__(self, model, in_sz: int, out_sz: int, max_shift: int, dtype=torch.float32):
+    def __init__(self, model, dtype=torch.float32):
         super().__init__()
         self.model = model
         
@@ -208,14 +208,10 @@ class TrainingModelWithLoss(torch.nn.Module):
             self.model = self.model.half()
 
         self.loss = torch.nn.MSELoss()
-        self.augmentation = DataPreproccessingBlock(out_sz, max_random_shift=max_shift, in_img_sz= in_sz, type=dtype)
 
     def forward(self, input_patch, loss_inputs=None):
-        if self.augmentation:
-            aug_patch, aug_label = self.augmentation(input_patch, loss_inputs)
-        else:
-            aug_patch = input_patch
-            aug_label = loss_inputs
+        aug_patch = input_patch
+        aug_label = loss_inputs
         
         output = self.model(aug_patch)
         if loss_inputs is None:
