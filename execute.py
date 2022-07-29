@@ -42,10 +42,6 @@ class BraggNN_IPU( BraggNN_Trainer ):
         self.model_with_loss = None
         self.inference_model = None
 
-        # Total time taken inside compute iterations
-        self.train_time = 0
-        self.valid_time = 0
-
         # ------------------------ #
         # Setup the training model
         # ------------------------ #
@@ -57,7 +53,9 @@ class BraggNN_IPU( BraggNN_Trainer ):
             print("SETTING PARTIALS TO HALF")
             train_model_opts.Precision.setPartialsType(torch.half)
 
-        self.dl_train = self.getDataloader(train_dataset, train_model_opts, args)
+        self.dl_train = DataLoader( dataset=train_dataset, batch_size=args.mbsz, shuffle=True,\
+                                    num_workers=args.num_threads, prefetch_factor=args.mbsz, drop_last=True, pin_memory=True )
+
         # Get the sample image for the input dataset
         train_img, train_lbl = next(iter(self.dl_train))
         # Get input image size

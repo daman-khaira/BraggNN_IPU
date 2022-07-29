@@ -12,7 +12,7 @@ def parse_args():
     parser.add_argument('-expName',type=str, default="run_log", help='Experiment name')
     parser.add_argument('-lr',     type=float,default=3e-4, help='learning rate')
     parser.add_argument('-mbsz',   type=int, default=512, help='mini batch size')
-    parser.add_argument('-maxep',  type=int, default=500, help='max training epoches')
+    parser.add_argument('-maxep',  type=int, default=50, help='max training epoches')
     parser.add_argument('-fcsz',   type=s2ituple, default='16_8_4_2', help='size of dense layers')
     parser.add_argument('-psz',    type=int, default=11, help='working patch size')
     parser.add_argument('-aug',    type=int, default=1, help='augmentation size')
